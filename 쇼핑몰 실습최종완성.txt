@@ -1,0 +1,426 @@
+<쇼핑몰 프로그램>
+< MYSQL Workbench>
+테이블 작성  (상품(goods)  
+
+ <이클립스>
+**(1파트마다)view->controller->dao->comtroller마무리
+
+1)file->new->dynamic web project-> goods
+*tomcat 버전 확인
+2)webapp->web-inf->lib->gson/json-simple/mysql-connector/tablibs 2개 파일 복사
+3) header에 들어갈 이미지를 
+  webapp->image(폴더)->shop.jpg 저장
+4) webapp->css->style.css  저장(구글폰트 사용)
+.ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;	
+}->추가
+5) webapp->home.jsp, about.jsp, header.jsp, footer.jsp 작성
+5-1) header.jsp: 네비게이션 바(부트스트랩) 사용,  내용 수정(제목, 링크)
+5-2) about.jsp: 내용 추가(쇼핑몰의 상품 리스트)
+5-3) home.jsp  확인
+  ->jquery / 핸들바 / 부트스트랩(css, js) /카카오개발자센터/ twbs-pagination/스타일시트 연결
+6) model->Database.java(sql 접속) 작성->user, db 수정 
+7) model-> NaverAPI.java  작성
+   * 네이버 개발자센터->Documents->서비스 API->검색->쇼핑
+      ->요청 URL  https://openapi.naver.com/v1/search/shop.json
+         * 파라미터 확인:query,display,start(기본값 1)
+      Documents->서비스 API->검색->검색 API 블로그 검색 구현 예제->java 소스를 내용 추가
+
+8) servers->server.xml  164 라인<Context docBase="c:/upload" path="/upload"/>
+---------
+(controller)HomeController
+(controller)GoodsController
+
+(model) NaverAPI (네이버개발자센터)
+(model) Database.java ->db,user 수정
+(model) GoodsVO
+(model) GoodsDAO->상품등록(insert)/상품목록(list)/상품검색수(total)/상품삭제(delete)
+
+(view)header.jsp->타이틀, 링크 수정
+(view)about.jsp-> 쇼핑몰 프론트엔드(상품목록)
+           ->  /goods/total, /goods/list.json (list.jsp와 거의 동일) 
+(view)goods폴더->search.jsp<상품검색>
+1) 타이틀,출력영역, 검색목록템플릿,검색,페이지네이션
+2) /goods/search->/goods/search.jsp 이동->출력
+3) $.ajax- (get)/goods/search.json ->NaverAPI.search(page, query)->검색내용출력
+4) $.ajax- (post)/goods/append->이미지 저장/타이틀 태그 빼고 저장(stringify/parse)
+   -> gdao.insert(vo) ->저장
+
+
+** 상품검색하여 저장 후 상품 목록 확인
+** c:/upload/goods에 이미지 저장
+
+(view)goods폴더->list.jsp<상품목록>
+1)  타이틀,출력영역, 검색목록템플릿,검색,페이지네이션
+2) /goods/list->/goods/list.jsp 이동->출력
+2) $.ajax- (get)/goods/list.json ->gdao.list(query, page) ->검색     *gson이용
+3) $.ajax- (get)/goods/total -> gdao.total(query)-> 상품검색수
+4) $.ajax- (post)/goods/delete ->gdao.delete(gid)->삭제
+
+=======================2일차
+
+추가)GoodsController=> "/goods/insert", "/goods/update", "/goods/read"
+
+5) insert.jsp -> 상품등록(사용자 쪽에서 사용),이미지 미리보기/ 리셋인 경우 
+쇼핑몰 :(get) /goods/insert->/goods/insert.jsp 이동->상품등록페이지
+상품등록(저장)은 method="post" 이동=>/goods/insert=>gdao.insert(vo)
+
+6) update.jsp-> 상품정보수정 :새로운 이미지 다운 받은 후 상품등록 후 수정
+list.jsp에서 상품번호에 링크 설정-> 수정페이지로 이동 
+(get) /goods/update->/goods/update.jsp 이동=>상품정보수정 페이지
+상품정보수정은은 method="post" 이동=>/goods/update=>gdao.update(vo)
+
+7)about.jsp에 내용 추가-> 쇼핑몰 첫화면:  이미지 클릭하면 상품정보페이지로 이동
+   - 이미지에 값과 스타일 설정
+   - 이미지 클릭하면 location.href="/goods/read?gid=" + gid; 로 이동
+8) read.jsp-> 새로운 페이지에서 상품정보-> 장바구니 / 바로구매
+(get) /goods/read->/goods/read.jsp 이동->상품정보 출력
+
+<장바구니 작업>
+9) (model) CartVO->수량(qnt)  (Goods 상속) 작성
+10) CartController->/cart/list","/cart/insert","/cart/list.json
+11) webapp->order 폴더->cart.jsp 작성->장바구니- 상품수량 수정, 금엑 변경, 총합계 구하기
+12) read.jsp에서 추가 작성 :  $.ajax- (get)/cart/insert ->세션 저장(등록) arrCart.add(cvo);
+*세션(저장장소(공간))은 서버에 접속하는 동안 작동-> 테이블에 저장안하고 카트는 서버에 접속하는 동안에 저장해야하므로 
+브라우저가 닫으면 사라짐
+=========================================================
+8/9(수) 3일차
+*** user폴더는 사용자를 의미함
+cart.jsp ->장바구니 체크박스
+mysql workbench-> 사용자테이블(users)/ 주문자테이블(purchase)/  주문상품테이블(orders)
+                 * 먼저 상품테이블(goods)은 데이터 입력 완료
+
+(model)UserVO 작성(*사용자테이블(uresr) 동일하게 작성)
+(model)UserDAO- public UserVO read(String uid) 작성
+(controller) UserController("/user/login", "/user/logout", "/user/read", "/user/insert")
+
+/user/login==>user 폴더->login.jsp
+              :로그인 처리(아이디,비밀번호)체크 , 회원가입버튼만
+(get) 기본값-login.jsp 로 이동
+(post) $.ajax-"post", 아이디, 비번 체크하여 로그인 성공여부체크
+      받은 값이 0이면 아이디 없음 1이면 아이디 있음  2이면 비번 불일치
+*** 세션에 값 저장
+
+/user/logout(get)==>webapp/header.jsp 내용 추가(로그아웃 표시)->쇼핑몰 첫화면으로 이동
+  ***  세션에 값 삭제
+
+/user/read(get)==> 사용자아이디(uid)를 주면서  DAO의 read 수행인 vo를 가지고 read.jsp로 이동
+                    header.jsp의 이름을 클릭하면 read로 이동하여  회원정보 출력
+                    사진은 c:/upload/photo에 저장(* 경로 확인할 것)
+                     *db 데이터 확인 
+	        회원정보 수정-> 이미지 클릭할 경우 변경이미지 파일 저장
+
+/user/insert(get)==> insert.jsp로 이동
+                           회원가입($.ajax(post)로 /user/login으로 이동하여 아이디,비밀번호 체크하여 
+                           체크값을 받아서 체크 후   회원가입
+		(post) method="post" ->(post)/user/insert로 가서 사진 저장, 데이터 저장
+  * 주소 검색(다음 이용)
+  * 이미지 클릭하여 다른 사진으로 변경
+ (controller) Carctontroller("/cart/list","/cart/insert","/cart/list.json","/cart/delete","/cart/update")
+/cart/list ==>/order/cart.jsp 로 이동(장바구니)
+                 
+/cart/list.json==> getList()-$.ajax(get) -> 데이터가 있으면 장바구니 내용 출력 
+                                                    데이터가 없으면 장바구니가 비어있음을 
+                                     -   총합계 금액 구하기
+/cart/insert==>
+/cart/delete==> cart.jsp=> $.ajax(get)  장바구니 상품 삭제
+/cart/update==>cart.jsp=> $.ajax(get)  장바구니 상품 수정
+
+=================================                      
+8월 10일 목 4일차
+*** order 폴더는 주문 관련
+
+f12->application->세션과 쿠키 확인
+
+세션(서버에 저장)은 톰캣에 저장
+쿠키는 데이터가 남음
+
+order 폴더- *card.jsp 에 order(주문).jsp include함
+          (주문 처리 추가)
+주문하기 버튼 클릭시 로그인이 안된경우(uid가 값이 없으면)-> 로그인페이지(/user/login)->장바구니로 이동(target="/cart/list")사용
+                           로그인 되어있는 경우(체크할 상품을 채크 후 주문하기 화면보여줌(장바구니 화면 숨김)
+                          * user/login.jsp에 내용 수정 if(target==""){location.href="/";}
+				else{ location.href=target;}==>cart/list(장바구니) 로 이동
+ 
+(controller)PurchaseController=>구매자정보 controller
+
+
+(model) PurchasVO 작성(구매자테이블 기준)-UserVO를 상속 받으므로 상속받는 내용은 제외하고 선언
+(model) PurchasDAO 작성->insert(PurchaseVO vo) 구매(주문)등록
+order폴더-order.jsp  : 주문하기 , 합계구하기
+
+/purchase/insert - order.jsp에서 $.ajax(post) ->주문 저장
+
+(model) OrderVO 작성(상품테이블 기준)
+(model) PurchasDAO 작성 insert(OrderVO vo) 주문상품등록
+ (controller)PurchaseController=>order/insert
+/order/insert- (PurchaseController)order.jsp$.ajax(post)에서 주문상품등록====>(Cartcontroller)/cart/delete "$.ajax(get) 
+                                                                      -> 삭제(주문이 완료되었으므로 장바구니 삭제함)
+
+
+(model) PurchasDAO 에서 구매목록 public ArrayList<PurchaseVO> list(String key, String query, int page) 
+==>  (controller)PurchaseController=>/purchase/list.json(gson 이용)
+
+=============================================
+8/11(금) 5일차
+페이지네이션
+관리자 페이지
+상태 변경, 조회
+일반/관리자 로그인/조회
+주문목록에서 구매상품 조회가능하게
+
+*import
+file-> import-> general->existing projects into workspace -> 압축푼 폴더 선택
+ ->options에서 copy ptojects into workspace 
+
+* view_orders 작성
+/purchase->list-> 주문목록
+                      상태 선택 및 변경
+/purchase->list.json-> /purchase/list.jsp에서 $.ajax(get) 검색페이지 처리
+/purchase/total : 검색수(페이지네이션 처리)  $.ajax(get)-  public int total(String key,String query)
+/purchase/read  read(구매정보) (public PurchaseVO  read(String pid)) 후-> list(구매한 상품목록)(public ArrayList<OrderVO> list(String pid)
+                     * purchase/read.jsp로 이동하여 vo 받아서 구매정보(ajax 사용 안함, 반복 안하고 1번만 수행)
+/purchase/update > /purchase/list.jsp에서 $.ajax(post) 상태변경처리
+* orderVO<= CartVO<=GoodsVO(상속받음)
+
+
+db에서 user 테이블에  role 컬럼 추가(1-관리자  2-일반)=> 관리자(manager, pass) 데이터 추가
+header.jsp에서 관리자와 일반인으로 구분하여 
+         role==1 => 관리자 목록(상품검색/상품목록/회원목록/구매목롣)
+         role==2 =>  일반인 목록( 장바구니,로그인/로그아웃)
+
+==============================================
+6일차 8/14(월)
+< 리뷰 작업>
+** review.jsp  : 로그인 사용자만 리뷰 수정-> 저장/취소,삭제 버튼 클릭시
+ * 수정 화면 나오면-> 리뷰화면 안나오게
+   수정에서 취소 누르면 수정 화면 없어지고 다시 리뷰화면으로 
+   ==>  toggle 사용
+
+* 리뷰 등록/출력/수정/삭제
+(view) goods/review.jsp
+(model) ReviewDAO.java 작성
+(controller)ReviewController.java
+/review/insert -  goods/review.jsp에서 $.ajax(post) - public void insert(ReviewVO vo) - 리뷰 등록
+/review/list.json- review.jsp에서 $.ajax(get) -public ArrayList<ReviewVO> list(String gid)출력-gson- (리뷰수 도 출력)
+/review/delete- review.jsp에서 $.ajax(post) -public void delete(int rid) 리뷰 삭제
+/review/update -review.jsp에서 $.ajax(post)  - public void update(int rid, String content) 리뷰 수정
+
+
+<좋아요 작업>
+
+< MYSQL Workbench>
+테이블 작성  (favorite(좋아요 테이블))- 데이터 입력(
+
+* 좋아요 유무/ 좋아요 추가/좋아요 삭제
+(view) goods/read.jsp
+(model) favorite.DAO 
+(controller)FavoriteController.java
+/favorite/read -  goods/read.jsp에서 $.ajax(get) - 좋아요 체크(유무) - public JSONObject read(String gid, String uid)
+/favorite/insert - goods/read.jsp에서  $.ajax(get) - 좋아요 추가- public void insert(String gid, String uid)
+/favorite/delete -  goods/read.jsp에서 $.ajax(get) - 좋아요 삭제 -public void delete(String gid, String uid)
+
+<사용자 아이디로 로그인하면 좋아요 체크 되도록 처리>
+< MYSQL Workbench>
+뷰 작성-view_goods(좋아요 수, 리뷰수)
+
+create view view_goods as
+select *,
+(select count(*) from reviews where gid=g.gid) rcnt, //리뷰수
+(select count(*) from favorite where gid=g.gid) fcnt //좋아요수
+from goods g
+order by regDate desc;
+
+(model)CountVO 작성
+(controller)GoodsController => uid 수정
+case "/goods/list.json": 
+		~~~
+	             String uid=request.getParameter("uid");
+			~~~
+			out.print(gson.toJson(gdao.list(query, page, uid)));
+
+(model)GoodsVO에서 CountVO를 상속받음
+                public class GoodsVO extends CountVO{~~~
+
+(model)GoodsDAO=>  public ArrayList<GoodsVO> list(String query, int page, String uid) 추가수정
+			~~~
+                  String sql="select *,";
+			sql+=" (select count(*) from favorite where g.gid=gid and uid=?) ucnt";
+			sql+=" from view_goods g where title like ? limit ?,6";
+	          PreparedStatement ps=Database.CON.prepareStatement(sql);
+			ps.setString(1, uid);
+			ps.setString(2, "%" + query + "%");
+			ps.setInt(3, (page-1)*6)
+
+		~~~
+		                          vo.setFcnt(rs.getInt("fcnt"));
+				vo.setRcnt(rs.getInt("rcnt"));
+				vo.setUcnt(rs.getInt("ucnt"));
+				array.add(vo);
+
+
+(VIEW) about.jsp => 추가수정	
+		<div class="card-footer">
+		<i class="bi {{heart ucnt}}" style="color:red;"></i>
+		<span style="font-size:0.7rem">{{fcnt}}</span>
+		<i class="bi bi-chat-right-dots ms-3"></i>
+		<span style="font-size:0.7rem">{{rcnt}}</span>
+		</div>	
+
+Handlebars.registerHelper("heart", function(ucnt){
+		if(ucnt==0) return "bi-suit-heart";
+		else return "bi-suit-heart-fill";
+	});
+~~~
+<script>
+const uid="${user.uid}";
+~~
+function getList(){
+		$.ajax({
+			~~
+			data:{page:page, query:query, uid:uid},
+			~~~
+
+
+<쿠키에 로그인 정보 저장하여 로그인상태 유지>
+1)user/login.jsp 추가
+~
+<div class="col text-start">
+<input type="checkbox" name="isLogin">로그인 상태유지
+</div>
+~~
+const isLogin=$(frm.isLogin).is(":checked");
+
+~~
+	data:{uid:uid, upass:upass, isLogin:isLogin},
+
+2) UserController
+
+2-1) 로그인 정보 저장
+(post) case "/user/login":
+~~
+	String isLogin=request.getParameter("isLogin");
+UserVO user=dao.read(uid);
+
+~~
+//로그인 정보 저장
+	if(isLogin.equals("true")) {//로그인 상태유지
+	Cookie cookie= new Cookie("uid",uid);
+	cookie.setMaxAge(60*60*24*7); //초*분*시간*일 동안 저장 (7일)
+	cookie.setPath("/");
+	response.addCookie(cookie);
+	}
+
+2-2) 로그아웃 정보 저장
+(get) case "/user/logout":
+~~~
+//로그인 정보 삭제
+			Cookie cookie= new Cookie("uid","");
+			cookie.setMaxAge(0); //초*분*시간*일 동안 저장 (7일)
+			cookie.setPath("/");
+			response.addCookie(cookie);
+			
+3) HomeController 추가
+* 브라우저에서 로그인하면서 로그인상태유지 체크 후 f12-> application 으로 로그인 정보 유지 확인해보고
+브라우저 닫고 다시 열어서 로그인 정보 유지상태 확인(어떤 브라우저이든 모두 가능)
+~~
+//쿠키에 uid 값 존재시 로그인 상태로 불러옴
+	Cookie[] cookies = request.getCookies();
+	if(cookies != null) {
+	    for(Cookie cookie: cookies) {
+ 		if(cookie.getName().equals("uid")) {
+			String uid=cookie.getValue();
+ 			UserVO user =dao.read(uid);
+			HttpSession session=request.getSession();
+			session.setAttribute("user",user);
+			                 	}
+			          }
+		        }
+
+<특정 유저의 구매목록>
+1)header.jsp  수정
+
+<li class="nav-item">
+	<a class="nav-link active" aria-current="page" href="/purchase/user">구매목록</a>
+							</li>
+****** 로그인이 안된상태일때는 구매목록이 안보이도록 내가 수정함
+
+	<c:if test="${user.role==2 }">
+	<li class="nav-item">
+	<a class="nav-link active" aria-current="page" href="/cart/list">장바구니</a>
+	</li>
+	<li class="nav-item">
+	<a class="nav-link active" aria-current="page" href="/purchase/user">구매목록</a>
+	</li>
+            </c:if>
+
+           <c:if test="${user==null}">
+          <li class="nav-item">
+	<a class="nav-link active" aria-current="page" href="/cart/list">장바구니</a>
+	</li>
+	</c:if>
+
+2) purchase/user.jsp 새로 작성
+
+3) public class PurchaseDAO {
+//특정 유저의 구매목록	
+		public ArrayList<PurchaseVO> user(String uid){ 새로 작성
+
+
+4) PurchaseController
+case "ㅛㄴㅃ :
+	HttpSession session=request.getSession();
+	UserVO user= (UserVO)session.getAttribute("user");			
+	request.setAttribute("array", dao.user(user.getUid()));
+	request.setAttribute("pageName", "/purchase/user.jsp");
+	dis.forward(request, response);
+	break;
+
+
+
+<차후 추가 처리 해야할 것>  
+**  manager 로그인 후  회원 목록 : 이름을 클릭 후 회원정보에서  나오게 하려면..
+                         UserController에서 추가수정해야함
+                                  case "/user/read":
+			UserVO vo=(UserVO)session.getAttribute("user");
+			=>여기서 세션으로 받지말고 request.getParameter로 받는 것으로 수정해야함
+
+			request.setAttribute("vo", dao.read(vo.getUid());
+			request.setAttribute("pageName", "/user/read.jsp");
+			dis.forward(request, response);
+			break;
+*** 결제 처리 추가
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
